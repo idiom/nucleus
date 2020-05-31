@@ -179,9 +179,11 @@ load_dynrelocs_bfd(bfd *bfd_h, Binary *bin)
   asymbol **bfd_symtab = nullptr;
   arelent **bfd_relocs = nullptr;
   reloc_howto_type *bfd_howto;
+  asection *bfd_sec;
 
   bfd_symtab = nullptr;
   bfd_relocs = nullptr;
+  bfd_sec = bfd_h->sections;
   relsize = bfd_get_dynamic_reloc_upper_bound(bfd_h);
   if(relsize == 0) {
     return 0;
@@ -229,7 +231,7 @@ load_dynrelocs_bfd(bfd *bfd_h, Binary *bin)
 #define APPLY_RELOC(x) \
   ((x & ~bfd_howto->dst_mask) | (((x & bfd_howto->src_mask) + relocation) & bfd_howto->dst_mask))
 
-      bfd_vma data_offset = bfd_reloc->address * bfd_octets_per_byte(bfd_h);
+      bfd_vma data_offset = bfd_reloc->address * bfd_octets_per_byte(bfd_h, bfd_sec);
       bfd_byte* data = sec.bytes + (data_offset - sec.vma);
 
       switch (bfd_howto->size) {
@@ -269,7 +271,7 @@ load_sections_bfd(bfd *bfd_h, Binary *bin)
   Section *sec;
 
   for(bfd_sec = bfd_h->sections; bfd_sec; bfd_sec = bfd_sec->next) {
-    bfd_flags = bfd_get_section_flags(bfd_h, bfd_sec);
+    bfd_flags = bfd_section_flags(bfd_sec);
 
     sectype = Section::SEC_TYPE_NONE;
     if(bfd_flags & SEC_CODE) {
@@ -280,9 +282,9 @@ load_sections_bfd(bfd *bfd_h, Binary *bin)
       continue;
     }
 
-    vma     = bfd_section_vma(bfd_h, bfd_sec);
-    size    = bfd_section_size(bfd_h, bfd_sec);
-    secname = bfd_section_name(bfd_h, bfd_sec);
+    vma     = bfd_section_vma(bfd_sec);
+    size    = bfd_section_size(bfd_sec);
+    secname = bfd_section_name(bfd_sec);
     if(!secname) secname = "<unnamed>";
 
     bin->sections.push_back(Section());
